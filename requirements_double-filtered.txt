@@ -1,0 +1,17 @@
+# requirements manually filtered after filtering by script
+cmapy==0.6.6
+h5py==2.8.0
+imageio==2.8.0
+ipython==7.13.0
+matplotlib==2.2.5
+moviepy==1.0.3
+notebook==6.0.3
+numpy==1.18.1
+Pillow==6.2.1
+scipy==1.4.1
+six==1.14.0
+tensorboard==1.15.0
+tensorflow==1.15.0
+torch==1.5.0
+torchvision==0.6.0a0+82fd1c8
+tqdm==4.46.0
