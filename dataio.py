@@ -596,8 +596,7 @@ class Implicit2DWrapper(torch.utils.data.Dataset):
 
     def __len__(self):
         # Eric: we consider each pixel as an individual sample
-        _, h, w = self.img.numpy().shape
-        return len(self.dataset)*h*w
+        return len(self.dataset)
 
     def get_grad_and_lap(self, img):
         if self.compute_diff == 'gradients':
@@ -669,8 +668,8 @@ class Implicit2DWrapper(torch.utils.data.Dataset):
 
         img = img.permute(1, 2, 0).view(-1, self.dataset.img_channels)
 
-        in_dict = {'idx': idx, 'coords': self.mgrid[idx:idx+1, :]}
-        gt_dict = {'img': img[idx:idx+1, :]}
+        in_dict = {'idx': idx, 'coords': self.mgrid}
+        gt_dict = {'img': img}
 
         if self.compute_diff == 'gradients':
             gt_dict = self.update_grad_and_lap(gt_dict, gradx=gradx, grady=grady)
@@ -685,19 +684,6 @@ class Implicit2DWrapper(torch.utils.data.Dataset):
             gt_dict = self.update_grad_and_lap(gt_dict)
 
         return in_dict, gt_dict
-
-    def get_item_for_eval(self):
-        # Eric: for evaluation we return the entire image
-        img = self.img
-        img = img.permute(1, 2, 0).view(-1, self.dataset.img_channels)
-        img = torch.unsqueeze(img, 0)
-        mgrid = self.mgrid
-        mgrid = torch.unsqueeze(mgrid, 0)
-
-        in_dict = {'idx': torch.Tensor([0]).cuda(), 'coords': mgrid.cuda()}
-        gt_dict = {'img': img.cuda()}
-        return in_dict, gt_dict
-
     
     def get_item_small(self, idx):
         img = self.transform(self.dataset[idx])

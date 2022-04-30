@@ -19,7 +19,7 @@ p.add_argument('--experiment_name', type=str, required=True,
                help='Name of subdirectory in logging_root where summaries and checkpoints will be saved.')
 
 # General training options
-p.add_argument('--batch_size', type=int, default=1)
+# p.add_argument('--batch_size', type=int, default=1)
 p.add_argument('--point_batch_size', type=int, default=500000)
 p.add_argument('--eval_patch_size', type=int, default=500000)
 p.add_argument('--lr', type=float, default=1e-4, help='learning rate. default=1e-4')
@@ -50,7 +50,7 @@ coord_dataset = dataio.Implicit2DWrapper(
 
 print("loading data...")
 dataloader = DataLoader(
-    coord_dataset, shuffle=True, batch_size=opt.batch_size*opt.point_batch_size, pin_memory=True, num_workers=0)
+    coord_dataset, shuffle=True, batch_size=1, pin_memory=True, num_workers=0)
 print("data loaded.")
 
 # Define the model.
@@ -74,7 +74,8 @@ loss_fn = partial(loss_functions.image_mse, None)
 summary_fn = partial(utils.write_image_summary, image_resolution)
 
 print("starting to train...")
-training.train(model=model, dataset=coord_dataset, train_dataloader=dataloader, epochs=opt.num_epochs, lr=opt.lr,
-               eval_patch_size=opt.eval_patch_size, steps_til_summary=opt.steps_til_summary,
-               epochs_til_checkpoint=opt.epochs_til_ckpt, model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn)
+training.train(
+    model=model, train_dataloader=dataloader, epochs=opt.num_epochs, lr=opt.lr,
+    point_batch_size=opt.point_batch_size, eval_patch_size=opt.eval_patch_size, steps_til_summary=opt.steps_til_summary,
+    epochs_til_checkpoint=opt.epochs_til_ckpt, model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn)
 print("training done.")

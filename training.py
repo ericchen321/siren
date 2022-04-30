@@ -10,10 +10,12 @@ import numpy as np
 import os
 import shutil
 import gc
+from math import ceil
 
 
-def train(model, dataset, train_dataloader, epochs, lr, eval_patch_size, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
-          summary_fn, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
+def train(
+    model, train_dataloader, epochs, lr, point_batch_size, eval_patch_size, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
+    summary_fn, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
 
     optim = torch.optim.Adam(lr=lr, params=model.parameters())
 
@@ -38,23 +40,41 @@ def train(model, dataset, train_dataloader, epochs, lr, eval_patch_size, steps_t
 
     writer = SummaryWriter(summaries_dir)
 
+    # Eric: load training/evaluation data and define number
+    # of training patches on each iteration
+    # assuming we always have only one image in the dataset
+    assert len(train_dataloader) == 1
+    model_input, gt = next(iter(train_dataloader))
+    model_input = {key: value.cuda() for key, value in model_input.items()}
+    gt = {key: value.cuda() for key, value in gt.items()}
+    img_dim = model_input['coords'].shape[1]
+    num_patches = ceil(img_dim / point_batch_size)
+
     total_steps = 0
-    model_input_eval, gt_eval = dataset.get_item_for_eval()
-    model_input_eval_arr = torch.split(model_input_eval['coords'], eval_patch_size, dim=1)
-    with tqdm(total=len(train_dataloader) * epochs) as pbar:
+    with tqdm(total=len(train_dataloader) * num_patches * epochs) as pbar:
         train_losses = []
         for epoch in range(epochs):
             if not epoch % epochs_til_checkpoint and epoch:
                 torch.save(model.state_dict(),
                            os.path.join(checkpoints_dir, 'model_epoch_%04d.pth' % epoch))
                 np.savetxt(os.path.join(checkpoints_dir, 'train_losses_epoch_%04d.txt' % epoch),
-                           np.array(train_losses))
-
-            for step, (model_input_train, gt_train) in enumerate(train_dataloader):
-                start_time = time.time()
+                           np.array(train_losses))            
             
-                model_input_train = {key: value.cuda() for key, value in model_input_train.items()}
-                gt_train = {key: value.cuda() for key, value in gt_train.items()}
+            start_time = time.time()
+
+            # Eric: divide meshgrid/image into point patches
+            coords_indices = np.arange(0, model_input['coords'].shape[1])
+            np.random.shuffle(coords_indices)
+            coord_arrays = np.array_split(coords_indices, num_patches, axis=0)
+        
+            for coord_array_index in range(len(coord_arrays)):
+                # Eric: train over each point batch
+                coord_array = coord_arrays[coord_array_index]
+                model_input_train = {
+                    'idx': model_input['idx'],
+                    'coords': model_input['coords'][:, coord_array, :]}
+                gt_train = {
+                    'img': gt['img'][:, coord_array, :]}
 
                 if double_precision:
                     model_input_train = {key: value.double() for key, value in model_input_train.items()}
@@ -91,8 +111,9 @@ def train(model, dataset, train_dataloader, epochs, lr, eval_patch_size, steps_t
                 writer.add_scalar("total_train_loss", train_loss, total_steps)
 
                 if not total_steps % steps_til_summary:
-                    # for evaluation, we use all points as input to the model and we feed these
-                    # points in patches
+                    # for evaluation, we use all points as input to the model and we also feed
+                    # these points in patches
+                    model_input_eval_arr = torch.split(model_input['coords'], eval_patch_size, dim=1)
                     model_out_arrs = []
                     for patch_index in range(len(model_input_eval_arr)):
                         model_input_eval_patch = {
@@ -105,12 +126,12 @@ def train(model, dataset, train_dataloader, epochs, lr, eval_patch_size, steps_t
                         model.train()
                         model_out_arrs.append(model_output_eval_patch['model_out'])
                     model_output_eval = {
-                        'model_in': model_input_eval['coords'],
+                        'model_in': model_input['coords'],
                         'model_out': torch.cat(model_out_arrs, dim=1).cuda()
                     }
-                    gt_eval = {key: value.cuda() for key, value in gt_eval.items()}
+                    gt_eval = {key: value.cuda() for key, value in gt.items()}
                     torch.save(model.state_dict(),
-                               os.path.join(checkpoints_dir, 'model_current.pth'))
+                                os.path.join(checkpoints_dir, 'model_current.pth'))
                     summary_fn(gt_eval, model_output_eval, writer, total_steps)
                     for arr in model_out_arrs:
                         del arr
