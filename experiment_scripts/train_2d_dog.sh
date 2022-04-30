@@ -1,0 +1,1 @@
+python experiment_scripts/train_img.py --experiment_name dog --model_type=sine --image_path data/dog_gt.jpg --num_epochs 10000 --epochs_til_ckpt 2000
