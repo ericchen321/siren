@@ -1,0 +1,23 @@
+h5py==2.10.0
+imageio==2.8.0
+ipython==7.13.0
+matplotlib==2.2.3
+moviepy==1.0.3
+notebook==6.0.3
+numpy==1.18.4
+Pillow==6.2.1
+scipy==1.4.1
+six==1.14.0
+#tensorboard==1.15.0
+# assuming torch/torchvision already installed
+#torch==1.7.1
+#torchvision==0.8.2
+tqdm==4.46.0
+#tensorflow-gpu==1.15.0
+tensorflow-gpu==2.2.0
+scikit-image==0.16.2
+scikit-learn==0.22.1
+opencv_python==3.4.4.19
+ConfigArgParse==1.5.3
+cmapy==0.6.6
+scikit-video==1.1.11

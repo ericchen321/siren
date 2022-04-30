@@ -1,0 +1,2 @@
+cmapy==0.6.6
+scikit-video==1.1.11
