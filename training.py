@@ -9,9 +9,10 @@ import time
 import numpy as np
 import os
 import shutil
+import gc
 
 
-def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
+def train(model, dataset, train_dataloader, epochs, lr, eval_patch_size, steps_til_summary, epochs_til_checkpoint, model_dir, loss_fn,
           summary_fn, val_dataloader=None, double_precision=False, clip_grad=False, use_lbfgs=False, loss_schedules=None):
 
     optim = torch.optim.Adam(lr=lr, params=model.parameters())
@@ -38,6 +39,8 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
     writer = SummaryWriter(summaries_dir)
 
     total_steps = 0
+    model_input_eval, gt_eval = dataset.get_item_for_eval()
+    model_input_eval_arr = torch.split(model_input_eval['coords'], eval_patch_size, dim=1)
     with tqdm(total=len(train_dataloader) * epochs) as pbar:
         train_losses = []
         for epoch in range(epochs):
@@ -47,21 +50,21 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 np.savetxt(os.path.join(checkpoints_dir, 'train_losses_epoch_%04d.txt' % epoch),
                            np.array(train_losses))
 
-            for step, (model_input, gt) in enumerate(train_dataloader):
+            for step, (model_input_train, gt_train) in enumerate(train_dataloader):
                 start_time = time.time()
             
-                model_input = {key: value.cuda() for key, value in model_input.items()}
-                gt = {key: value.cuda() for key, value in gt.items()}
+                model_input_train = {key: value.cuda() for key, value in model_input_train.items()}
+                gt_train = {key: value.cuda() for key, value in gt_train.items()}
 
                 if double_precision:
-                    model_input = {key: value.double() for key, value in model_input.items()}
-                    gt = {key: value.double() for key, value in gt.items()}
+                    model_input_train = {key: value.double() for key, value in model_input_train.items()}
+                    gt_train = {key: value.double() for key, value in gt_train.items()}
 
                 if use_lbfgs:
                     def closure():
                         optim.zero_grad()
-                        model_output = model(model_input)
-                        losses = loss_fn(model_output, gt)
+                        model_output_train = model(model_input_train)
+                        losses = loss_fn(model_output_train, gt_train)
                         train_loss = 0.
                         for loss_name, loss in losses.items():
                             train_loss += loss.mean() 
@@ -69,8 +72,9 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                         return train_loss
                     optim.step(closure)
 
-                model_output = model(model_input)
-                losses = loss_fn(model_output, gt)
+                # print(f"forward pass, {model_input_train['coords'].shape}")
+                model_output_train = model(model_input_train)
+                losses = loss_fn(model_output_train, gt_train)
 
                 train_loss = 0.
                 for loss_name, loss in losses.items():
@@ -87,9 +91,32 @@ def train(model, train_dataloader, epochs, lr, steps_til_summary, epochs_til_che
                 writer.add_scalar("total_train_loss", train_loss, total_steps)
 
                 if not total_steps % steps_til_summary:
+                    # for evaluation, we use all points as input to the model and we feed these
+                    # points in patches
+                    model_out_arrs = []
+                    for patch_index in range(len(model_input_eval_arr)):
+                        model_input_eval_patch = {
+                            'coords': model_input_eval_arr[patch_index]
+                        }
+                        model.eval()
+                        model_output_eval_patch = None
+                        with torch.no_grad():
+                            model_output_eval_patch = model(model_input_eval_patch)
+                        model.train()
+                        model_out_arrs.append(model_output_eval_patch['model_out'])
+                    model_output_eval = {
+                        'model_in': model_input_eval['coords'],
+                        'model_out': torch.cat(model_out_arrs, dim=1).cuda()
+                    }
+                    gt_eval = {key: value.cuda() for key, value in gt_eval.items()}
                     torch.save(model.state_dict(),
                                os.path.join(checkpoints_dir, 'model_current.pth'))
-                    summary_fn(model, model_input, gt, model_output, writer, total_steps)
+                    summary_fn(gt_eval, model_output_eval, writer, total_steps)
+                    for arr in model_out_arrs:
+                        del arr
+                    del model_output_eval['model_in']
+                    del model_output_eval['model_out']
+                    torch.cuda.empty_cache()
 
                 if not use_lbfgs:
                     optim.zero_grad()
