@@ -1,1 +1,1 @@
-python experiment_scripts/train_img.py --experiment_name dog --model_type=sine --image_path data/dog_gt.jpg --num_epochs 50000 --point_batch_size 2097152 --epochs_til_ckpt 250 --steps_til_summary 100
+python experiment_scripts/train_img.py --experiment_name dog --model_type=sine --image_path data/dog_gt.jpg --num_epochs 50000 --point_batch_size 2097152 --epochs_til_ckpt 100 --steps_til_summary 1000
