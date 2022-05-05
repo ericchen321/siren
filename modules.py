@@ -25,13 +25,45 @@ class BatchLinear(nn.Linear, MetaModule):
         return output
 
 
-class Sine(nn.Module):
-    def __init(self):
+class LearnableFreqAndPhaseShift(nn.Module):
+    r"""
+    Learnable frequency and phase shift inspired by Pi-GAN.
+    """
+    def __init__(self, hidden_features):
         super().__init__()
+        self.freq = self.init_param(hidden_features)
+        self.phase_shift = self.init_param(hidden_features)
+
+    def init_param(self, size):
+        r"""
+        Initialize and return a learnable parameter of specified size.
+        """
+        ts = torch.empty(size)
+        nn.init.normal_(ts)
+        return torch.nn.Parameter(ts, requires_grad=True)
+    
+    def forward(self, x):
+        # implementation adapted from Pi-GAN's FiLMLayer class
+        freq = self.freq.unsqueeze(0).expand_as(x)
+        phase_shift = self.phase_shift.unsqueeze(0).expand_as(x)
+        out = freq * x + phase_shift
+        # print(f"x has shape: {x.shape}")
+        # print(f"gamma*x+beta has shape: {out.shape}")
+        return out
+
+
+class Sine(nn.Module):
+    def __init__(self, hidden_features):
+        super().__init__()
+
+        self.freq_and_ps_net = LearnableFreqAndPhaseShift(hidden_features)
 
     def forward(self, input):
         # See paper sec. 3.2, final paragraph, and supplement Sec. 1.5 for discussion of factor 30
-        return torch.sin(30 * input)
+        # print(f"input has shape: {input.shape}")
+
+        #return torch.sin(30 * input)
+        return torch.sin(self.freq_and_ps_net(input))
 
 
 class FCBlock(MetaModule):
@@ -47,7 +79,7 @@ class FCBlock(MetaModule):
 
         # Dictionary that maps nonlinearity name to the respective function, initialization, and, if applicable,
         # special first-layer initialization scheme
-        nls_and_inits = {'sine':(Sine(), sine_init, first_layer_sine_init),
+        nls_and_inits = {'sine':(Sine(hidden_features=hidden_features), sine_init, first_layer_sine_init),
                          'relu':(nn.ReLU(inplace=True), init_weights_normal, None),
                          'sigmoid':(nn.Sigmoid(), init_weights_xavier, None),
                          'tanh':(nn.Tanh(), init_weights_xavier, None),
@@ -90,6 +122,7 @@ class FCBlock(MetaModule):
         if params is None:
             params = OrderedDict(self.named_parameters())
 
+        # print(f"coords has shape: {coords.shape}")
         output = self.net(coords, params=get_subdict(params, 'net'))
         return output
 
@@ -308,7 +341,7 @@ class SetEncoder(nn.Module):
             nl = nn.ReLU(inplace=True)
             weight_init = init_weights_normal
         elif nonlinearity == 'sine':
-            nl = Sine()
+            nl = Sine(hidden_features=hidden_features)
             weight_init = sine_init
 
         self.net = [nn.Linear(in_features, hidden_features), nl]
