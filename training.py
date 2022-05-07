@@ -59,17 +59,16 @@ def train(
                            os.path.join(checkpoints_dir, 'model_epoch_%04d.pth' % epoch))
                 np.savetxt(os.path.join(checkpoints_dir, 'train_losses_epoch_%04d.txt' % epoch),
                            np.array(train_losses))            
-            
-            start_time = time.time()
 
             # Eric: divide meshgrid/image into point patches
-            coords_indices = np.arange(0, model_input['coords'].shape[1])
-            np.random.shuffle(coords_indices)
-            coord_arrays = np.array_split(coords_indices, num_patches, axis=0)
+            coords_indices = torch.randperm(img_dim)
+            coord_arrays = torch.split(coords_indices, point_batch_size, dim=0)
         
             for coord_array_index in range(len(coord_arrays)):
+                start_time = time.time()
+
                 # Eric: train over each point batch
-                coord_array = coord_arrays[coord_array_index]
+                coord_array = coord_arrays[coord_array_index].detach().numpy()
                 model_input_train = {
                     'idx': model_input['idx'],
                     'coords': model_input['coords'][:, coord_array, :]}
@@ -111,7 +110,7 @@ def train(
                 writer.add_scalar("total_train_loss", train_loss, total_steps)
 
                 if not total_steps % steps_til_summary:
-                    # for evaluation, we use all points as input to the model and we also feed
+                    # Eric: for evaluation, we use all points as input to the model and we also feed
                     # these points in patches
                     model_input_eval_arr = torch.split(model_input['coords'], eval_patch_size, dim=1)
                     model_out_arrs = []
@@ -125,6 +124,7 @@ def train(
                             model_output_eval_patch = model(model_input_eval_patch)
                         model.train()
                         model_out_arrs.append(model_output_eval_patch['model_out'])
+                        del model_output_eval_patch['model_out']
                     model_output_eval = {
                         'model_in': model_input['coords'],
                         'model_out': torch.cat(model_out_arrs, dim=1).cuda()
@@ -154,7 +154,7 @@ def train(
                 pbar.update(1)
 
                 if not total_steps % steps_til_summary:
-                    tqdm.write("Epoch %d, Total loss %0.6f, iteration time %0.6f" % (epoch, train_loss, time.time() - start_time))
+                    tqdm.write("Step %d, Total loss %0.6f, iteration time %0.6f" % (total_steps, train_loss, time.time() - start_time))
 
                     if val_dataloader is not None:
                         print("Running validation set...")
@@ -170,6 +170,11 @@ def train(
                         model.train()
 
                 total_steps += 1
+            
+            del coords_indices
+            for coord_arr in coord_arrays:
+                del coord_arr
+            torch.cuda.empty_cache()
 
         torch.save(model.state_dict(),
                    os.path.join(checkpoints_dir, 'model_final.pth'))
