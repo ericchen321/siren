@@ -63,7 +63,7 @@ if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'ta
     # model = modules.SingleBVPNet(
     #     out_features=img_num_channels, type=opt.model_type, mode='mlp', sidelength=image_resolution)
     # defining the model
-    layers = [256, 256, 256, 256, 256]
+    layers = [256, 256, 256, 256]
     in_features = 2
     out_features = 3
     initializer = 'siren'
