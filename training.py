@@ -82,7 +82,7 @@ def train(
                 if use_lbfgs:
                     def closure():
                         optim.zero_grad()
-                        model_output_train = model(model_input_train)
+                        model_output_train = model(model_input_train["coords"])
                         losses = loss_fn(model_output_train, gt_train)
                         train_loss = 0.
                         for loss_name, loss in losses.items():
@@ -92,7 +92,8 @@ def train(
                     optim.step(closure)
 
                 # print(f"forward pass, {model_input_train['coords'].shape}")
-                model_output_train = model(model_input_train)
+                model_output_train = {
+                    "model_out": model(model_input_train["coords"])}
                 losses = loss_fn(model_output_train, gt_train)
 
                 train_loss = 0.
@@ -121,7 +122,8 @@ def train(
                         model.eval()
                         model_output_eval_patch = None
                         with torch.no_grad():
-                            model_output_eval_patch = model(model_input_eval_patch)
+                            model_output_eval_patch = {
+                                "model_out": model(model_input_eval_patch["coords"])}
                         model.train()
                         model_out_arrs.append(model_output_eval_patch['model_out'])
                         del model_output_eval_patch['model_out']
@@ -162,7 +164,7 @@ def train(
                         with torch.no_grad():
                             val_losses = []
                             for (model_input, gt) in val_dataloader:
-                                model_output = model(model_input)
+                                model_output = model(model_input["coords"])
                                 val_loss = loss_fn(model_output, gt)
                                 val_losses.append(val_loss)
 

@@ -8,6 +8,9 @@ import dataio, meta_modules, utils, training, loss_functions, modules
 from torch.utils.data import DataLoader
 import configargparse
 from functools import partial
+from siren_pytorch import SirenNet
+from torch import nn
+
 
 p = configargparse.ArgumentParser()
 p.add('-c', '--config_filepath', required=False, is_config_file=True, help='Path to config file.')
@@ -57,8 +60,16 @@ print("data loaded.")
 print("defining model...")
 if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
         or opt.model_type == 'softplus':
-    model = modules.SingleBVPNet(
-        out_features=img_num_channels, type=opt.model_type, mode='mlp', sidelength=image_resolution)
+    # model = modules.SingleBVPNet(
+    #     out_features=img_num_channels, type=opt.model_type, mode='mlp', sidelength=image_resolution)
+    model = SirenNet(
+        dim_in = 2,                        # input dimension, ex. 2d coor
+        dim_hidden = 256,                  # hidden dimension
+        dim_out = 3,                       # output dimension, ex. rgb value
+        num_layers = 5,                    # number of layers
+        final_activation = nn.Sigmoid(),   # activation of final layer (nn.Identity() for direct output)
+        w0_initial = 30.                   # different signals may require different omega_0 in the first layer - this is a hyperparameter
+    )
 elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
     model = modules.SingleBVPNet(
         out_features=img_num_channels, type='relu', mode=opt.model_type, sidelength=image_resolution)
