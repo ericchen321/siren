@@ -8,7 +8,7 @@ import dataio, meta_modules, utils, training, loss_functions, modules
 from torch.utils.data import DataLoader
 import configargparse
 from functools import partial
-from siren_pytorch import SirenNet
+from siren_lucidrains import SirenNet
 from torch import nn
 
 
@@ -66,8 +66,10 @@ if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'ta
         dim_in = 2,                        # input dimension, ex. 2d coor
         dim_hidden = 256,                  # hidden dimension
         dim_out = 3,                       # output dimension, ex. rgb value
-        num_layers = 5,                    # number of layers
-        final_activation = nn.Sigmoid(),   # activation of final layer (nn.Identity() for direct output)
+        # Eric: one less hidden layer
+        num_layers = 4,                    # number of layers
+        # Eric: direct output for last layer
+        final_activation = nn.Identity(),   # activation of final layer (nn.Identity() for direct output)
         w0_initial = 30.                   # different signals may require different omega_0 in the first layer - this is a hyperparameter
     )
 elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
