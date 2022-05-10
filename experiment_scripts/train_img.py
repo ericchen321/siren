@@ -8,7 +8,7 @@ import dataio, meta_modules, utils, training, loss_functions, modules
 from torch.utils.data import DataLoader
 import configargparse
 from functools import partial
-from siren import SIREN
+from siren_dalmia import SIREN
 from torch import nn
 
 
