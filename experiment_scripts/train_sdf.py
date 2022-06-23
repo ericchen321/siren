@@ -21,10 +21,10 @@ p.add_argument('--experiment_name', type=str, required=True,
 # General training options
 p.add_argument('--batch_size', type=int, default=1400)
 p.add_argument('--lr', type=float, default=1e-4, help='learning rate. default=5e-5')
-p.add_argument('--num_epochs', type=int, default=10000,
-               help='Number of epochs to train for.')
+p.add_argument('--num_steps', type=int, default=100000,
+               help='Number of steps to train for.')
 
-p.add_argument('--epochs_til_ckpt', type=int, default=1,
+p.add_argument('--steps_til_ckpt', type=int, default=10000,
                help='Time interval in seconds until checkpoint is saved.')
 p.add_argument('--steps_til_summary', type=int, default=100,
                help='Time interval in seconds until tensorboard summary is saved.')
@@ -54,7 +54,7 @@ summary_fn = utils.write_sdf_summary
 
 root_path = os.path.join(opt.logging_root, opt.experiment_name)
 
-training.train_sdf(model=model, train_dataloader=dataloader, epochs=opt.num_epochs, lr=opt.lr,
-               steps_til_summary=opt.steps_til_summary, epochs_til_checkpoint=opt.epochs_til_ckpt,
+training.train_sdf(model=model, train_dataloader=dataloader, steps=opt.num_steps, lr=opt.lr,
+               steps_til_summary=opt.steps_til_summary, steps_til_checkpoint=opt.steps_til_ckpt,
                model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn, double_precision=False,
                clip_grad=True)

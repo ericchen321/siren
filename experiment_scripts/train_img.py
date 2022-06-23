@@ -23,10 +23,10 @@ p.add_argument('--experiment_name', type=str, required=True,
 p.add_argument('--point_batch_size', type=int, default=500000)
 p.add_argument('--eval_patch_size', type=int, default=500000)
 p.add_argument('--lr', type=float, default=1e-4, help='learning rate. default=1e-4')
-p.add_argument('--num_epochs', type=int, default=10000,
+p.add_argument('--num_steps', type=int, default=100000,
                help='Number of epochs to train for.')
 
-p.add_argument('--epochs_til_ckpt', type=int, default=25,
+p.add_argument('--steps_til_ckpt', type=int, default=10000,
                help='Time interval in seconds until checkpoint is saved.')
 p.add_argument('--steps_til_summary', type=int, default=1000,
                help='Time interval in seconds until tensorboard summary is saved.')
@@ -75,7 +75,8 @@ summary_fn = partial(utils.write_image_summary, image_resolution)
 
 print("starting to train...")
 training.train_img(
-    model=model, train_dataloader=dataloader, epochs=opt.num_epochs, lr=opt.lr,
-    point_batch_size=opt.point_batch_size, eval_patch_size=opt.eval_patch_size, steps_til_summary=opt.steps_til_summary,
-    epochs_til_checkpoint=opt.epochs_til_ckpt, model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn)
+    model=model, train_dataloader=dataloader, steps=opt.num_steps, lr=opt.lr,
+    point_batch_size=opt.point_batch_size, eval_patch_size=opt.eval_patch_size,
+    steps_til_summary=opt.steps_til_summary, steps_til_checkpoint=opt.steps_til_ckpt,
+    model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn)
 print("training done.")
