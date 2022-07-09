@@ -75,7 +75,7 @@ summary_fn = partial(utils.write_image_summary, image_resolution)
 
 print("starting to train...")
 training.train_img(
-    model=model, train_dataloader=dataloader, steps=opt.num_steps, lr=opt.lr,
+    model=model, train_dataloader=dataloader, steps=(opt.num_steps+1), lr=opt.lr,
     point_batch_size=opt.point_batch_size, eval_patch_size=opt.eval_patch_size,
     steps_til_summary=opt.steps_til_summary, steps_til_checkpoint=opt.steps_til_ckpt,
     model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn)
