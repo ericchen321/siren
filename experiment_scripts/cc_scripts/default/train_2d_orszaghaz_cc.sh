@@ -11,4 +11,4 @@ module load cuda/11.0
 cd /home/gxc321/
 source SirenEnv/bin/activate
 cd /home/gxc321/scratch/siren/
-source experiment_scripts/train_2d.sh orszaghaz 100000 1048576 514288 10000 5000
+source experiment_scripts/train_2d.sh orszaghaz default 100000 1048576 514288 10000 5000

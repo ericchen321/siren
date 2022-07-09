@@ -54,7 +54,7 @@ summary_fn = utils.write_sdf_summary
 
 root_path = os.path.join(opt.logging_root, opt.experiment_name)
 
-training.train_sdf(model=model, train_dataloader=dataloader, steps=opt.num_steps, lr=opt.lr,
+training.train_sdf(model=model, train_dataloader=dataloader, steps=(opt.num_steps+1), lr=opt.lr,
                steps_til_summary=opt.steps_til_summary, steps_til_checkpoint=opt.steps_til_ckpt,
                model_dir=root_path, loss_fn=loss_fn, summary_fn=summary_fn, double_precision=False,
                clip_grad=True)
