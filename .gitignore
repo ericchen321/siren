@@ -130,6 +130,7 @@ dmypy.json
 
 # Logs, models
 logs/
+logs
 
 # data
 data/
