@@ -1,7 +1,8 @@
 #!/bin/bash
+#SBATCH --array=0-21
 #SBATCH --time=10:00:00
 #SBATCH --account=def-rhodin
-#SBATCH --job-name=tr_suzhou_a_default_siren
+#SBATCH --job-name=tr_img_default_siren
 #SBATCH --gres=gpu:v100l:1
 #SBATCH --mem=24G
 module load python/3.6
@@ -11,4 +12,5 @@ module load cuda/11.0
 cd /home/gxc321/
 source SirenEnv/bin/activate
 cd /home/gxc321/scratch/siren/
-source experiment_scripts/train_2d.sh suzhou_a default 100000 1048576 514288 10000 5000
+
+source experiment_scripts/cc_scripts/img/default/train_img_per_task_cc.sh $SLURM_ARRAY_TASK_ID
