@@ -11,6 +11,7 @@ declare -a shape_names=(
     "lunar_lander"
     "ninjago_city"
     "oak_tree"
+    "thai_statue"
     )
 
 for shape_name in ${shape_names[@]}; do
