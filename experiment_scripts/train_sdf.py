@@ -31,6 +31,7 @@ p.add_argument('--steps_til_summary', type=int, default=100,
 
 p.add_argument('--model_type', type=str, default='sine',
                help='Options are "sine" (all sine activations) and "mixed" (first layer sine, other layers tanh)')
+p.add_argument('--num_hidden_layers', type=int, default=3)
 p.add_argument('--point_cloud_path', type=str, default='/home/sitzmann/data/point_cloud.xyz',
                help='Options are "sine" (all sine activations) and "mixed" (first layer sine, other layers tanh)')
 
@@ -45,7 +46,10 @@ dataloader = DataLoader(sdf_dataset, shuffle=True, batch_size=1, pin_memory=True
 if opt.model_type == 'nerf':
     model = modules.SingleBVPNet(type='relu', mode='nerf', in_features=3)
 else:
-    model = modules.SingleBVPNet(type=opt.model_type, in_features=3)
+    model = modules.SingleBVPNet(
+        type=opt.model_type,
+        in_features=3,
+        num_hidden_layers=opt.num_hidden_layers)
 model.cuda()
 
 # Define the loss

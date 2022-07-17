@@ -73,4 +73,4 @@ else
     exit 1
 fi
 
-source experiment_scripts/train_2d.sh $IMG_NAME default 100000 10000 10000
+source experiment_scripts/train_2d.sh $IMG_NAME 6_hidden_layers 100000 10000 10000

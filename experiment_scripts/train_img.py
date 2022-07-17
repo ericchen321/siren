@@ -35,6 +35,7 @@ p.add_argument('--model_type', type=str, default='sine',
                help='Options currently are "sine" (all sine activations), "relu" (all relu activations,'
                     '"nerf" (relu activations and positional encoding as in NeRF), "rbf" (input rbf layer, rest relu),'
                     'and in the future: "mixed" (first layer sine, other layers tanh)')
+p.add_argument('--num_hidden_layers', type=int, default=3)
 
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
 opt = p.parse_args()
@@ -58,7 +59,11 @@ print("defining model...")
 if opt.model_type == 'sine' or opt.model_type == 'relu' or opt.model_type == 'tanh' or opt.model_type == 'selu' or opt.model_type == 'elu'\
         or opt.model_type == 'softplus':
     model = modules.SingleBVPNet(
-        out_features=img_num_channels, type=opt.model_type, mode='mlp', sidelength=image_resolution)
+        out_features=img_num_channels,
+        type=opt.model_type,
+        mode='mlp',
+        num_hidden_layers=opt.num_hidden_layers,
+        sidelength=image_resolution)
 elif opt.model_type == 'rbf' or opt.model_type == 'nerf':
     model = modules.SingleBVPNet(
         out_features=img_num_channels, type='relu', mode=opt.model_type, sidelength=image_resolution)

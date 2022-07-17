@@ -58,4 +58,4 @@ else
     exit 1
 fi
 
-source experiment_scripts/train_3d.sh $SHAPE_NAME default 200000 10000 5000
+source experiment_scripts/train_3d.sh $SHAPE_NAME 6_hidden_layers 200000 10000 5000
