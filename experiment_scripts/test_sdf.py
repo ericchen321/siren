@@ -27,6 +27,7 @@ p.add_argument('--model_type', type=str, default='sine',
 p.add_argument('--mode', type=str, default='mlp',
                help='Options are "mlp" or "nerf"')
 p.add_argument('--resolution', type=int, default=1600)
+p.add_argument('--num_hidden_layers', type=int, default=3)
 
 opt = p.parse_args()
 
@@ -36,7 +37,11 @@ class SDFDecoder(torch.nn.Module):
         super().__init__()
         # Define the model.
         if opt.mode == 'mlp':
-            self.model = modules.SingleBVPNet(type=opt.model_type, final_layer_factor=1, in_features=3)
+            self.model = modules.SingleBVPNet(
+                type=opt.model_type,
+                final_layer_factor=1,
+                in_features=3,
+                num_hidden_layers=opt.num_hidden_layers)
         elif opt.mode == 'nerf':
             self.model = modules.SingleBVPNet(type='relu', mode='nerf', final_layer_factor=1, in_features=3)
         self.model.load_state_dict(torch.load(opt.checkpoint_path))
