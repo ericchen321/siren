@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --array=0-16
+#SBATCH --array=1,4,6,8
 #SBATCH --time=02:00:00
 #SBATCH --account=def-rhodin
 #SBATCH --job-name=tr_sdf_default_siren
