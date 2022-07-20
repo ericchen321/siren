@@ -10,7 +10,7 @@ declare -a shape_names=(
     "at-ot"
     "beard_man"
     "camera"
-    # "cathedral"
+    "cathedral"
     "david"
     "dragon"
     "dragon_warrior"
@@ -27,4 +27,7 @@ declare -a shape_names=(
 for shape_name in ${shape_names[@]}; do
     source experiment_scripts/render_3d.sh \
     $shape_name $exp_category $logging_subdir $resolution
+
+    mv logs/$logging_subdir/${exp_category}_${shape_name}/test.ply \
+    logs/$logging_subdir/${exp_category}_${shape_name}/${shape_name}_${resolution}.ply
 done
