@@ -35,3 +35,6 @@ python experiment_scripts/test_sdf.py \
 --checkpoint_path logs/$logging_subdir/${exp_category}_${shape_name}/checkpoints/model_final.pth \
 --logging_root logs/$logging_subdir/ \
 --resolution $resolution \
+
+mv logs/$logging_subdir/${exp_category}_${shape_name}/test.ply \
+logs/$logging_subdir/${exp_category}_${shape_name}/${shape_name}_${resolution}.ply
